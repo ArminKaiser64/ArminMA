@@ -21,10 +21,11 @@ public class BuildingInitialPosition : MonoBehaviour
     private GameObject kamera;
     private float verschiebenX;
     private float verschiebenZ;
-
+    
 
     void Start()
     {
+       
         kamera = GameObject.Find("Main Camera");
         cube1 = GameObject.Find("Marker1");
         cube2 = GameObject.Find("Marker2");
@@ -82,17 +83,17 @@ public class BuildingInitialPosition : MonoBehaviour
 
             //controller.GetComponent<ARUWPVideo>().enabled = false;
 
+           
 
-            //Right now, I only destroy the script as soon as the position has been found. It is possible that I have to destroy the whole gameobject (ARUWP Controller)
-            
-            
+
+
             gameObject.transform.position = (cube1.transform.position + cube2.transform.position + cube3.transform.position + cube4.transform.position) / 4;
-            gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y + 1.0f, gameObject.transform.position.z);
+            gameObject.transform.position = new Vector3(gameObject.transform.position.x, gameObject.transform.position.y + 0.5f, gameObject.transform.position.z);
 
-            verschiebenX = gameObject.transform.position.x - kamera.transform.position.x;
+            /*verschiebenX = gameObject.transform.position.x - kamera.transform.position.x;
             verschiebenZ = gameObject.transform.position.z - kamera.transform.position.z;
 
-            //gameObject.transform.position = new Vector3(gameObject.transform.position.x - verschiebenX, gameObject.transform.position.y, gameObject.transform.position.z - verschiebenZ);
+            gameObject.transform.position = new Vector3(gameObject.transform.position.x - verschiebenX, gameObject.transform.position.y, gameObject.transform.position.z - verschiebenZ);*/
 
             Destroy(controller);
             move = false;

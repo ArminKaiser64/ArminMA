@@ -16,8 +16,7 @@ Shader "Dynamic Control Shader" {
 	Properties{
 		_Tess("Tessellation", Range(1,32)) = 4
 		_MainTex("Base (RGB)", 2D) = "white" {}
-		_DispTex("Disp Texture", 2D) = "black" {}
-		_NormalMap("Normalmap", 2D) = "bump" {}
+		_DitherPattern("Dithering Pattern", 2D) = "white" {}
 		_Displacement("Displacement", Range(0, 100.0)) = 0.3
 		_Color("Color", color) = (1,1,1,0)
 		_SpecColor("Spec color", color) = (0.5,0.5,0.5,0.5)
@@ -58,6 +57,8 @@ Shader "Dynamic Control Shader" {
 		_Factor("Reduktionsfaktor", Float) = 0.0
 		_RotationFactor("Rotation Factor", Float) = 0.0
 		_Versuch("Versuch", Range(0.0, 50.0)) = 0
+		_Color1("Dither Color 1", Color) = (0, 0, 0, 1)
+		_Color2("Dither Color 2", Color) = (1, 1, 1, 1)
 
 
 
@@ -98,7 +99,7 @@ Shader "Dynamic Control Shader" {
 							float4 vertex : POSITION;
 							float2 texcoord : TEXCOORD0;
 							float4 screenPos;
-
+							float4 screenPosition : TEXCOORD1;
 						};
 
 
@@ -115,7 +116,10 @@ Shader "Dynamic Control Shader" {
 
 						}
 
-						sampler2D _DispTex;
+						sampler2D _DitherPattern;
+						float4 _Color1;
+						float4 _Color2;
+
 						float _Displacement;
 						float _DistortionFactor;
 						float _DistortionRadius;
@@ -154,11 +158,19 @@ Shader "Dynamic Control Shader" {
 						float _RotationFactor;
 						half _Transparency;
 						float _Versuch;
+						float4 _DitherPattern_TexelSize;
 
 						//, out Input o
 						void disp(inout appdata v)
 						{
 							//UNITY_INITIALIZE_OUTPUT(Input, o);
+
+					
+
+								//define the initial position of the vertex when the program is launched
+								float3 initPos = v.vertex;
+								
+							
 
 
 					
@@ -408,10 +420,15 @@ Shader "Dynamic Control Shader" {
 						  float rightDot = dot(centerVector2, rightNormal2);
 						  float leftDot = dot(centerVector2, leftNormal2);
 
+
+						  
+
+
 						//When the control Distortion is being triggered, gaps between the rooms are being created. For that reason, the below correction is being used to enhance the width of the rooms which have a neighbor
 						//The direction of the neighbor, wether or not the user is within distortion range and wether or not the vertex is being called for the enhancement are checked in the if-Statement
 							  //if (_Back == 1.0 && (dd != 0.0) && (dd <= radius) && centerVector.y <= 0.0) {
-							  if (_Back == 1.0 && (dd != 0.0) && (dd <= radius) && backdist3 < backdist2) {
+							  //if (_Back == 1.0 && (dd != 0.0) && (dd <= radius) && backdist3 < backdist2) {
+							if (_Back == 1.0 && (dd != 0.0) && (dd <= radius) && initPos.y < 0) {
 							 
 
 
@@ -423,7 +440,8 @@ Shader "Dynamic Control Shader" {
 
 
 							  //if (_Front == 1.0 && (dd != 0.0) && (dd <= radius) && centerVector.y >= 0.0) {
-							  if (_Front == 1.0 && (dd != 0.0) && (dd <= radius) && frontdist3 < frontdist2) {
+							  //if (_Front == 1.0 && (dd != 0.0) && (dd <= radius) && frontdist3 < frontdist2) {
+							  if (_Front == 1.0 && (dd != 0.0) && (dd <= radius) && initPos.y > 0) {
 								  
 
 
@@ -434,7 +452,8 @@ Shader "Dynamic Control Shader" {
 							  }
 
 							  //if ((dd != 0.0) && (dd <= radius) && centerVector.x >= 0.0) {
-							  if (_Right == 1.0 && (dd != 0.0) && (dd <= radius) && rightdist3 < rightdist2) {
+							  //if (_Right == 1.0 && (dd != 0.0) && (dd <= radius) && rightdist3 < rightdist2) {
+							  if (_Right == 1.0 && (dd != 0.0) && (dd <= radius) && initPos.x > 0) {
 								  
 
 								  //versuch.x -= (1 - dd / radius) * (rightdist/2);
@@ -443,7 +462,8 @@ Shader "Dynamic Control Shader" {
 
 							  }
 							  //if (_Left == 1.0 && (dd != 0.0) && (dd <= radius) && centerVector.x <= 0.0) {
-							  if (_Left == 1.0 && (dd != 0.0) && (dd <= radius) && leftdist3 < leftdist2) {
+							  //if (_Left == 1.0 && (dd != 0.0) && (dd <= radius) && leftdist3 < leftdist2) {
+							  if (_Left == 1.0 && (dd != 0.0) && (dd <= radius) && initPos.x < 0) {
 								  
 
 								  //versuch.x += (1 - dd / radius) * (leftdist / 2);
@@ -465,7 +485,9 @@ Shader "Dynamic Control Shader" {
 
 								void surf(Input IN, inout SurfaceOutput o) {
 
-
+									//
+									float texColor = tex2D(_DitherPattern, IN.texcoord).r;
+									//
 									half4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
 
 									float3 Userpos = _WorldSpaceCameraPos;
@@ -479,7 +501,10 @@ Shader "Dynamic Control Shader" {
 									float3 objectCenterTest = unity_ObjectToWorld[3].xyz;
 									float3 localPos = mul(unity_ObjectToWorld, IN.vertex.xyz) - objectCenterTest;
 
-								
+									
+
+
+									
 
 									float4x4 thresholdMatrix =
 									{ 1.0 / 17.0,  9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0,
@@ -488,20 +513,31 @@ Shader "Dynamic Control Shader" {
 									  16.0 / 17.0,  8.0 / 17.0, 14.0 / 17.0,  6.0 / 17.0
 									};
 									float4x4 _RowAccess = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
-									float2 poss = IN.worldPos.xz / IN.worldPos.z;
-									//float2 poss = IN.screenPos.xz / IN.screenPos.z;
+									//float2 poss = IN.worldPos.xz / IN.worldPos.z;
+									float2 poss = IN.screenPos.xz / IN.screenPos.z;
+									
 									float2 test = IN.texcoord;
 									//float test = IN.vertex.x;
-								
-							
+
+									//
+									float2 screenPos = IN.screenPosition.xy / IN.screenPosition.w;
+									float2 ditherCoordinate = screenPos * _ScreenParams.xy * _DitherPattern_TexelSize.xy;
+									float ditherValue = tex2D(_DitherPattern, ditherCoordinate).r;
+									//	
 									
-									clip(_Transparency - thresholdMatrix[fmod(poss.x, 4)] * _RowAccess[fmod(poss.y, 4)]);
+									//clip(_Transparency - thresholdMatrix[fmod(poss.x, 4)] * _RowAccess[fmod(poss.y, 4)]);
+									//clip(_Transparency - thresholdMatrix[fmod(poss.x, 4)] * _RowAccess[fmod(poss.y, 4)]);
 									//clip((dist - _Versuch) * (-1));
 									//float4 centerVectorTest = objectCenterTest - IN.vertex;
 
 									o.Specular = 0.2;
 									o.Gloss = 1.0;
 									o.Normal = UnpackNormal(tex2D(_NormalMap, IN.uv_MainTex));
+									//
+									float ditheredValue = step(ditherValue, texColor);
+									float4 col = lerp(_Color1, _Color2, ditheredValue);
+									o.Albedo = col;
+									//
 								}
 								ENDCG
 		}

@@ -42,6 +42,14 @@ public class ColliderTest : MonoBehaviour
         obj = GameObject.Find("visus_fullscale_20190826");
         rot = Mathf.Cos(obj.transform.eulerAngles.y * Mathf.Deg2Rad);
         buildingscale = obj.transform.localScale.x;
+        Mesh mesh = GetComponent<MeshFilter>().mesh;
+        Bounds bounds = mesh.bounds;
+
+        //diables the clipping of the rooms by enhancing their bounds
+        mesh.bounds = new Bounds(mesh.bounds.center, new Vector3(1000,1000,1000));
+
+
+
 
         faktor = (buildingscale - 10) / 40;
         displacement = Mathf.Lerp(2f, 1.0f, faktor);
@@ -55,7 +63,7 @@ public class ColliderTest : MonoBehaviour
             distradius = 1;
         }else if(buildingscale == 2)
         {
-            displacement = 12;
+            displacement = 18;
             distradius = 1;
         }
         else if (buildingscale == 4)
@@ -239,9 +247,12 @@ public class ColliderTest : MonoBehaviour
                     }
                 }
             }
+            
         }
 
-
+        cubeRenderer.material.SetFloat("_MiddleX", gameObject.transform.position.x);
+        cubeRenderer.material.SetFloat("_MiddleY", gameObject.transform.position.y);
+        cubeRenderer.material.SetFloat("_MiddleZ", gameObject.transform.position.z);
         /*if (front)
         {
             cubeRenderer.material.SetFloat("_FrontMiddleX", frontNeighbor.transform.position.x);
@@ -269,9 +280,7 @@ public class ColliderTest : MonoBehaviour
             cubeRenderer.material.SetFloat("_RightMiddleZ", rightNeighbor.transform.position.z);
         }*/
 
-            cubeRenderer.material.SetFloat("_MiddleX", gameObject.transform.position.x);
-            cubeRenderer.material.SetFloat("_MiddleY", gameObject.transform.position.y);
-            cubeRenderer.material.SetFloat("_MiddleZ", gameObject.transform.position.z);
+
 
 
 
@@ -283,7 +292,7 @@ public class ColliderTest : MonoBehaviour
             //rend.material.shader = shader1;
 
         }*/
-       
+        
 
     }
 }
